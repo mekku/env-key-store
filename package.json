@@ -1,9 +1,17 @@
 {
-  "name": "env-store",
+  "name": "@mekku/env-store",
   "version": "1.0.0",
   "description": "A CLI tool for managing encrypted project secrets",
   "main": "dist/index.js",
   "private": false,
+  "homepage": "https://github.com/mekku/env-store",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mekku/env-store.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mekku/env-store/issues"
+  },
   "bin": {
     "env-store": "dist/index.js"
   },
