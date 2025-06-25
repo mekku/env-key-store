@@ -93,6 +93,11 @@ export class ProjectService {
     await this.saveStore(store, password);
   }
 
+  async reEncryptStore(oldPassword: string, newPassword: string): Promise<void> {
+    const store = await this.loadStore(oldPassword);
+    await this.saveStore(store, newPassword);
+  }
+
   private async loadStore(password: string): Promise<ProjectStore> {
     if (!(await this.storageService.exists())) {
       return {

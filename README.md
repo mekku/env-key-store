@@ -9,6 +9,8 @@ A CLI tool for managing encrypted project secrets and environment variables.
 - 🔑 Password-protected access (stored securely)
 - 📁 Configurable storage location
 - 🚀 Easy CLI interface
+- 🔄 Multiple store files support
+- 🔐 Custom password per operation
 
 ## Installation
 
@@ -106,6 +108,33 @@ env-store list
 env-store remove <project-name>
 ```
 
+#### Change master password:
+```bash
+env-store change-password
+```
+
+### Advanced Options
+
+All commands support these optional flags:
+
+- `-s, --store <path>` - Use a custom store file path
+- `-p, --password <password>` - Use a custom password for this operation
+
+Examples:
+```bash
+# Use different store file
+env-store set projecta API_KEY=abc123 -s /path/to/other/store
+
+# Use different password
+env-store pull projecta .env -p mypassword
+
+# Use both custom store and password
+env-store list -s ./backup.store -p backup-password
+
+# Change password for specific store
+env-store change-password -s /path/to/store
+```
+
 ## Security
 
 - All secrets are encrypted using AES-256-GCM
@@ -113,6 +142,7 @@ env-store remove <project-name>
 - Storage file can be placed anywhere (including cloud storage)
 - No secrets are ever stored in plain text
 - No password prompts required after initial setup
+- Support for multiple encrypted stores with different passwords
 
 ## Configuration
 

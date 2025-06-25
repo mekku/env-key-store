@@ -12,15 +12,15 @@ export class SetCommand {
     this.configService = new ConfigService(cryptoService);
   }
 
-  async execute(projectName: string, secrets: string[]): Promise<void> {
+  async execute(projectName: string, secrets: string[], customStorePath?: string, customPassword?: string): Promise<void> {
     await this.configService.initialize();
     
     if (!(await this.configService.isInitialized())) {
       throw new Error('Store is not initialized. Please run "env-store init" first.');
     }
 
-    const password = await this.configService.getPassword();
-    const storagePath = await this.configService.getStoragePath();
+    const password = customPassword || await this.configService.getPassword();
+    const storagePath = await this.configService.getStoragePathForFile(customStorePath);
     const storageService = new FileStorageService(storagePath);
     const cryptoService = new CryptoService();
     

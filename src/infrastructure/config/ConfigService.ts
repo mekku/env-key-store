@@ -46,6 +46,20 @@ export class ConfigService {
     await fs.writeFile(this.configPath, JSON.stringify(config, null, 2));
   }
 
+  async changePassword(newPassword: string): Promise<void> {
+    const config = await this.loadConfig();
+    const encryptedPassword = await this.cryptoService.encrypt(newPassword, this.machineKey);
+    config.encryptedPassword = encryptedPassword;
+    await fs.writeFile(this.configPath, JSON.stringify(config, null, 2));
+  }
+
+  async getStoragePathForFile(customPath?: string): Promise<string> {
+    if (customPath) {
+      return path.resolve(customPath);
+    }
+    return await this.getStoragePath();
+  }
+
   async isInitialized(): Promise<boolean> {
     try {
       await fs.access(this.configPath);
