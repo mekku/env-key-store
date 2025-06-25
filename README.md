@@ -6,7 +6,7 @@ A CLI tool for managing encrypted project secrets and environment variables.
 
 - 🔐 Encrypted storage of project secrets
 - 🗂️ Project-based organization
-- 🔑 Password-protected access
+- 🔑 Password-protected access (stored securely)
 - 📁 Configurable storage location
 - 🚀 Easy CLI interface
 
@@ -31,7 +31,7 @@ yarn link
 
 ### Initial Setup
 
-1. Set your master password:
+1. Initialize with a master password:
 ```bash
 env-store init
 ```
@@ -106,22 +106,18 @@ env-store list
 env-store remove <project-name>
 ```
 
-#### Change master password:
-```bash
-env-store change-password
-```
-
 ## Security
 
 - All secrets are encrypted using AES-256-GCM
-- Master password is stored encrypted on your local machine
+- Master password is encrypted and stored locally
 - Storage file can be placed anywhere (including cloud storage)
 - No secrets are ever stored in plain text
+- No password prompts required after initial setup
 
 ## Configuration
 
 The tool stores configuration in:
-- `~/.env-store/config.json` - Configuration and encrypted master password
+- `~/.env-store/config.json` - Configuration and encrypted password
 - Custom storage file (configurable via `env-store use`)
 
 ## Development

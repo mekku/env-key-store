@@ -5,7 +5,7 @@ import { ICryptoService } from '../../domain/interfaces/ICryptoService';
 
 export interface Config {
   storagePath: string;
-  encryptedPasswordHash: string;
+  encryptedPassword: string;
 }
 
 export class ConfigService {
@@ -21,17 +21,17 @@ export class ConfigService {
 
   async setPassword(password: string): Promise<void> {
     await this.ensureConfigDir();
-    const hashedPassword = await this.cryptoService.hashPassword(password);
+    const encryptedPassword = await this.cryptoService.encrypt(password, this.machineKey);
     const config: Config = {
-      storagePath: path.join(this.configDir, 'env-store.store'),
-      encryptedPasswordHash: hashedPassword
+      storagePath: path.resolve(this.configDir, 'env-store.store'),
+      encryptedPassword: encryptedPassword
     };
     await fs.writeFile(this.configPath, JSON.stringify(config, null, 2));
   }
 
-  async verifyPassword(password: string): Promise<boolean> {
+  async getPassword(): Promise<string> {
     const config = await this.loadConfig();
-    return await this.cryptoService.verifyPassword(password, config.encryptedPasswordHash);
+    return await this.cryptoService.decrypt(config.encryptedPassword, this.machineKey);
   }
 
   async getStoragePath(): Promise<string> {
@@ -41,7 +41,8 @@ export class ConfigService {
 
   async setStoragePath(storagePath: string): Promise<void> {
     const config = await this.loadConfig();
-    config.storagePath = storagePath;
+    // Convert to absolute path
+    config.storagePath = path.resolve(storagePath);
     await fs.writeFile(this.configPath, JSON.stringify(config, null, 2));
   }
 

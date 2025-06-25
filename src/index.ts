@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { InitCommand } from './application/commands/InitCommand';
 import { SetCommand } from './application/commands/SetCommand';
@@ -18,18 +17,6 @@ program
   .name('env-store')
   .description('A CLI tool for managing encrypted project secrets')
   .version('1.0.0');
-
-// Helper function to get password
-async function getPassword(): Promise<string> {
-  const answers = await inquirer.prompt([
-    {
-      type: 'password',
-      name: 'password',
-      message: 'Enter your master password:'
-    }
-  ]);
-  return answers.password;
-}
 
 // Init command
 program
@@ -53,9 +40,8 @@ program
   .argument('<secrets...>', 'Secrets in KEY=value format')
   .action(async (project: string, secrets: string[]) => {
     try {
-      const password = await getPassword();
       const setCommand = new SetCommand();
-      await setCommand.execute(project, secrets, password);
+      await setCommand.execute(project, secrets);
       console.log(chalk.green(`✓ Secrets set for project '${project}'`));
     } catch (error) {
       console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
@@ -71,9 +57,8 @@ program
   .argument('[output]', 'Output file (default: .env)', '.env')
   .action(async (project: string, output: string) => {
     try {
-      const password = await getPassword();
       const pullCommand = new PullCommand();
-      await pullCommand.execute(project, output, password);
+      await pullCommand.execute(project, output);
       console.log(chalk.green(`✓ Secrets pulled to '${output}'`));
     } catch (error) {
       console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
@@ -87,9 +72,8 @@ program
   .description('List all projects')
   .action(async () => {
     try {
-      const password = await getPassword();
       const listCommand = new ListCommand();
-      await listCommand.execute(password);
+      await listCommand.execute();
     } catch (error) {
       console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
       process.exit(1);
@@ -119,9 +103,8 @@ program
   .argument('<envfile>', '.env file to import')
   .action(async (project: string, envfile: string) => {
     try {
-      const password = await getPassword();
       const pushCommand = new PushCommand();
-      await pushCommand.execute(project, envfile, password);
+      await pushCommand.execute(project, envfile);
       console.log(chalk.green(`✓ Secrets from '${envfile}' added to project '${project}'`));
     } catch (error) {
       console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
@@ -137,9 +120,8 @@ program
   .argument('<keys...>', 'Keys to remove')
   .action(async (project: string, keys: string[]) => {
     try {
-      const password = await getPassword();
       const unsetCommand = new UnsetCommand();
-      await unsetCommand.execute(project, keys, password);
+      await unsetCommand.execute(project, keys);
       console.log(chalk.green(`✓ Keys removed from project '${project}': ${keys.join(', ')}`));
     } catch (error) {
       console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);
@@ -155,9 +137,8 @@ program
   .argument('<envfile>', '.env file to import')
   .action(async (project: string, envfile: string) => {
     try {
-      const password = await getPassword();
       const replaceCommand = new ReplaceCommand();
-      await replaceCommand.execute(project, envfile, password);
+      await replaceCommand.execute(project, envfile);
       console.log(chalk.green(`✓ All secrets in project '${project}' replaced with keys from '${envfile}'`));
     } catch (error) {
       console.error(chalk.red('Error:'), error instanceof Error ? error.message : error);

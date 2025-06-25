@@ -13,17 +13,14 @@ export class PullCommand {
     this.configService = new ConfigService(cryptoService);
   }
 
-  async execute(projectName: string, outputFile: string, password: string): Promise<void> {
+  async execute(projectName: string, outputFile: string): Promise<void> {
     await this.configService.initialize();
     
     if (!(await this.configService.isInitialized())) {
       throw new Error('Store is not initialized. Please run "env-store init" first.');
     }
 
-    if (!(await this.configService.verifyPassword(password))) {
-      throw new Error('Invalid password');
-    }
-
+    const password = await this.configService.getPassword();
     const storagePath = await this.configService.getStoragePath();
     const storageService = new FileStorageService(storagePath);
     const cryptoService = new CryptoService();
