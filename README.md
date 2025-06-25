@@ -164,7 +164,79 @@ yarn lint
 
 # Format code
 yarn format
+
+# Validate (run tests)
+yarn validate
 ```
+
+## Contributing
+
+This project uses [semantic-release](https://github.com/semantic-release/semantic-release) for automated versioning and releases. Please follow the [Conventional Commits](https://www.conventionalcommits.org/) specification for commit messages:
+
+### Setup Commit Message Template
+
+To help you follow the conventional commits format, you can set up a Git commit message template:
+
+```bash
+# Option 1: Use the setup script
+yarn setup
+
+# Option 2: Manual setup
+git config commit.template .gitmessage
+```
+
+This will automatically show the commit message template when you run `git commit` without the `-m` flag.
+
+### Commit Message Format
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Types
+
+- `feat`: A new feature
+- `fix`: A bug fix
+- `docs`: Documentation only changes
+- `style`: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+- `refactor`: A code change that neither fixes a bug nor adds a feature
+- `perf`: A code change that improves performance
+- `test`: Adding missing tests or correcting existing tests
+- `chore`: Changes to the build process or auxiliary tools and libraries such as documentation generation
+
+### Examples
+
+```bash
+# Feature
+git commit -m "feat: add support for custom encryption algorithms"
+
+# Bug fix
+git commit -m "fix: resolve issue with password validation"
+
+# Breaking change
+git commit -m "feat!: change default encryption method to AES-256-GCM
+
+BREAKING CHANGE: The default encryption method has changed from AES-128 to AES-256-GCM. Existing encrypted files will need to be re-encrypted."
+
+# Documentation
+git commit -m "docs: update README with new usage examples"
+```
+
+### Release Process
+
+When you push to the `main` branch, semantic-release will:
+
+1. Analyze your commit messages
+2. Determine the next version number
+3. Generate release notes
+4. Update the CHANGELOG.md
+5. Create a Git tag
+6. Publish to npm
+7. Create a GitHub release
 
 ## Architecture
 

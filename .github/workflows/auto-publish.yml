@@ -14,6 +14,8 @@ permissions:
   packages: write
   pages: write
   id-token: write
+  issues: write
+  pull-requests: write
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
@@ -66,75 +68,15 @@ jobs:
       - name: Run validate
         run: yarn validate
 
-      - name: Determine version bump type
-        id: version-bump
-        run: |
-          # Get the last commit message
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          echo "Commit message: $COMMIT_MSG"
-          
-          # Check for version bump indicators in commit message
-          if echo "$COMMIT_MSG" | grep -q "\[major\]\|\[breaking\]"; then
-            echo "bump_type=major" >> $GITHUB_OUTPUT
-            echo "Version bump: MAJOR (from commit message)"
-          elif echo "$COMMIT_MSG" | grep -q "\[minor\]\|\[feature\]"; then
-            echo "bump_type=minor" >> $GITHUB_OUTPUT
-            echo "Version bump: MINOR (from commit message)"
-          elif echo "$COMMIT_MSG" | grep -q "\[patch\]\|\[fix\]\|\[bug\]"; then
-            echo "bump_type=patch" >> $GITHUB_OUTPUT
-            echo "Version bump: PATCH (from commit message)"
-          else
-            echo "bump_type=patch" >> $GITHUB_OUTPUT
-            echo "Version bump: PATCH (automatic fallback)"
-          fi
-      - name: Bump version and publish
-        run: |
-          # Configure git
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          
-          # Get bump type
-          BUMP_TYPE=${{ steps.version-bump.outputs.bump_type }}
-          
-          # Show current version
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Current version: $CURRENT_VERSION"
-          
-          # Show package info
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
-          echo "Package name: $PACKAGE_NAME"
-          
-          # Check npm registry
-          echo "NPM registry: $(npm config get registry)"
-          
-          # Check if logged in
-          echo "NPM whoami:"
-          npm whoami || echo "Not logged in to npm"
-          
-          # Bump version using yarn (without git operations)
-          yarn version --$BUMP_TYPE --message "chore: bump version to $NEW_VERSION [skip ci]"
-          
-          # Get new version
-          NEW_VERSION=$(node -p "require('./package.json').version")
-          echo "New version: $NEW_VERSION"
-          # Build project
-          yarn build
-          
-          # Push changes
-          git push origin HEAD:main
-          
-          # Create and push tag
-          git push origin "v$NEW_VERSION"
-          
-          # Publish to npm using yarn with public access
-          echo "Publishing to npm..."
-          echo "Package: $PACKAGE_NAME"
-          echo "Version: $NEW_VERSION"
-          npm publish ./dist --access public
-          
-          echo "✅ Published version $NEW_VERSION to npm"
+      - name: Build project
+        run: yarn build
+
+      - name: Release
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_ENV: production
+        run: npx semantic-release
 
       - name: Check if doc command is available or end workflow if not
         id: should-run-docs
@@ -143,6 +85,7 @@ jobs:
             echo "✅ Documentation command is not available, skipping documentation generation"
             echo "should-run-docs=false" >> $GITHUB_OUTPUT
           fi
+
       - name: Generate documentation
         if: steps.should-run-docs.outputs.should-run-docs == 'true'
         run: |
@@ -150,6 +93,7 @@ jobs:
           yarn docs:clean
           yarn docs
           echo "✅ Documentation generated"
+          
           # Configure git
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
@@ -161,17 +105,18 @@ jobs:
             # Add documentation changes
             git add docs/
             
-            # Get the new version
-            NEW_VERSION=$(node -p "require('./package.json').version")
+            # Get the current version from package.json
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
             
             # Commit with [doc] tag
-            git commit -m "[doc] Update documentation for version $NEW_VERSION"
+            git commit -m "[doc] Update documentation for version $CURRENT_VERSION"
             
             # Push documentation changes
             git push origin HEAD:main
             
             echo "✅ Documentation committed and pushed"
           fi
+
       - name: Update develop branch with new version
         if: steps.should-run-docs.outputs.should-run-docs == 'true'
         run: |
@@ -179,9 +124,9 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Get the new version that was just published
-          NEW_VERSION=$(node -p "require('./package.json').version")
-          echo "Updating develop branch with version: $NEW_VERSION"
+          # Get the current version from package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Updating develop branch with version: $CURRENT_VERSION"
           
           # Fetch all branches
           git fetch origin
@@ -220,7 +165,7 @@ jobs:
           # Push all changes to develop
           git push origin develop
           
-          echo "✅ Updated develop branch with version $NEW_VERSION and documentation changes"
+          echo "✅ Updated develop branch with version $CURRENT_VERSION and documentation changes"
           
       - name: Setup Pages
         if: steps.should-run-docs.outputs.should-run-docs == 'true'

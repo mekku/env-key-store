@@ -1,0 +1,29 @@
+# <type>[optional scope]: <description>
+#
+# [optional body]
+#
+# [optional footer(s)]
+#
+# Types:
+#   feat     (new feature for the user, not a new feature for build script)
+#   fix      (bug fix for the user, not a fix to a build script)
+#   docs     (changes to the documentation)
+#   style    (formatting, missing semi colons, etc; no production code change)
+#   refactor (refactoring production code, eg. renaming a variable)
+#   test     (adding missing tests, refactoring tests; no production code change)
+#   chore    (updating grunt tasks etc; no production code change)
+#
+# Examples:
+#   feat: add support for custom encryption algorithms
+#   fix: resolve issue with password validation
+#   docs: update README with new usage examples
+#   style: format code according to style guide
+#   refactor: extract encryption logic into separate service
+#   test: add unit tests for ProjectService
+#   chore: update dependencies
+#
+# Breaking changes:
+#   feat!: change default encryption method
+#
+#   BREAKING CHANGE: The default encryption method has changed from AES-128 to AES-256-GCM.
+#   Existing encrypted files will need to be re-encrypted. 
