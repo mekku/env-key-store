@@ -1,0 +1,248 @@
+name: Auto Publish and Deploy Documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'README.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'yarn'
+
+      - name: Check if NPM_TOKEN is set
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "NPM_TOKEN is not set"
+            exit 1
+          fi
+          echo "NPM_TOKEN is set"
+          echo "Token length: ${#NPM_TOKEN}"
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Setup npm authentication
+        run: |
+          echo "Setting up npm authentication..."
+          npm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
+          echo "NPM authentication configured"
+          echo "Testing authentication..."
+          npm whoami
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install dependencies with dev dependencies
+        run: yarn install
+
+      - name: Run validate
+        run: yarn validate
+
+      - name: Determine version bump type
+        id: version-bump
+        run: |
+          # Get the last commit message
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit message: $COMMIT_MSG"
+          
+          # Check for version bump indicators in commit message
+          if echo "$COMMIT_MSG" | grep -q "\[major\]\|\[breaking\]"; then
+            echo "bump_type=major" >> $GITHUB_OUTPUT
+            echo "Version bump: MAJOR (from commit message)"
+          elif echo "$COMMIT_MSG" | grep -q "\[minor\]\|\[feature\]"; then
+            echo "bump_type=minor" >> $GITHUB_OUTPUT
+            echo "Version bump: MINOR (from commit message)"
+          elif echo "$COMMIT_MSG" | grep -q "\[patch\]\|\[fix\]\|\[bug\]"; then
+            echo "bump_type=patch" >> $GITHUB_OUTPUT
+            echo "Version bump: PATCH (from commit message)"
+          else
+            echo "bump_type=patch" >> $GITHUB_OUTPUT
+            echo "Version bump: PATCH (automatic fallback)"
+          fi
+      - name: Bump version and publish
+        run: |
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Get bump type
+          BUMP_TYPE=${{ steps.version-bump.outputs.bump_type }}
+          
+          # Show current version
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Show package info
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          echo "Package name: $PACKAGE_NAME"
+          
+          # Check npm registry
+          echo "NPM registry: $(npm config get registry)"
+          
+          # Check if logged in
+          echo "NPM whoami:"
+          npm whoami || echo "Not logged in to npm"
+          
+          # Bump version using yarn (without git operations)
+          yarn version --$BUMP_TYPE --message "chore: bump version to $NEW_VERSION [skip ci]"
+          
+          # Get new version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "New version: $NEW_VERSION"
+          # Build project
+          yarn build
+          
+          # Push changes
+          git push origin HEAD:main
+          
+          # Create and push tag
+          git push origin "v$NEW_VERSION"
+          
+          # Publish to npm using yarn with public access
+          echo "Publishing to npm..."
+          echo "Package: $PACKAGE_NAME"
+          echo "Version: $NEW_VERSION"
+          npm publish ./dist --access public
+          
+          echo "✅ Published version $NEW_VERSION to npm"
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Check if doc command is available or end workflow if not
+        id: should-run-docs
+        run: |
+          if ! yarn docs; then
+            echo "✅ Documentation command is not available, skipping documentation generation"
+            echo "should-run-docs=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Generate documentation
+        if: steps.should-run-docs.outputs.should-run-docs == 'true'
+        run: |
+          echo "Generating documentation..."
+          yarn docs:clean
+          yarn docs
+          echo "✅ Documentation generated"
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Check if there are changes in docs
+          if git diff --quiet docs/; then
+            echo "No documentation changes to commit"
+          else
+            # Add documentation changes
+            git add docs/
+            
+            # Get the new version
+            NEW_VERSION=$(node -p "require('./package.json').version")
+            
+            # Commit with [doc] tag
+            git commit -m "[doc] Update documentation for version $NEW_VERSION"
+            
+            # Push documentation changes
+            git push origin HEAD:main
+            
+            echo "✅ Documentation committed and pushed"
+          fi
+      - name: Update develop branch with new version
+        if: steps.should-run-docs.outputs.should-run-docs == 'true'
+        run: |
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Get the new version that was just published
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "Updating develop branch with version: $NEW_VERSION"
+          
+          # Fetch all branches
+          git fetch origin
+          
+          # Checkout develop branch
+          git checkout develop
+          
+          # Now merge the documentation changes from main
+          echo "Merging documentation changes from main..."
+          
+          # Try to merge with strategy to handle conflicts
+          if git merge origin/main --no-edit -m "chore: merge docs from main [skip ci]" --strategy=recursive -X theirs; then
+            echo "✅ Merge successful"
+          else
+            echo "⚠️ Merge conflict detected, resolving..."
+            
+            # Check if there are conflicts
+            if git diff --name-only --diff-filter=U | grep -q .; then
+              echo "Resolving conflicts by keeping main version for docs..."
+              
+              # For docs conflicts, keep the main version
+              git checkout --theirs docs/
+              git add docs/
+              
+              # For package.json conflicts, keep the develop version (with updated version)
+              git checkout --ours package.json
+              git add package.json
+              
+              # Complete the merge
+              git commit -m "chore: resolve merge conflicts, keep main docs and develop version [skip ci]"
+            else
+              echo "No conflicts to resolve"
+            fi
+          fi
+          
+          # Push all changes to develop
+          git push origin develop
+          
+          echo "✅ Updated develop branch with version $NEW_VERSION and documentation changes"
+          
+      - name: Setup Pages
+        if: steps.should-run-docs.outputs.should-run-docs == 'true'
+        uses: actions/configure-pages@v5
+
+      - name: Build with Jekyll
+        if: steps.should-run-docs.outputs.should-run-docs == 'true'
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./docs/api/html
+          destination: ./_site
+
+      - name: Upload artifact
+        if: steps.should-run-docs.outputs.should-run-docs == 'true'
+        uses: actions/upload-pages-artifact@v3
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        if: steps.should-run-docs.outputs.should-run-docs == 'true'
+        uses: actions/deploy-pages@v4
+
+      - name: Cleanup uncommitted changes
+        run: |
+          git clean -f
+          echo "✅ Cleanup completed"

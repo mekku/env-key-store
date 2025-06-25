@@ -9,7 +9,7 @@ export interface Config {
 }
 
 export class ConfigService {
-  private readonly configDir = path.join(homedir(), '.env-store');
+  private readonly configDir = path.join(homedir(), '.env-key-store');
   private readonly configPath = path.join(this.configDir, 'config.json');
   private readonly machineKey = 'machine-key';
 
@@ -23,7 +23,7 @@ export class ConfigService {
     await this.ensureConfigDir();
     const encryptedPassword = await this.cryptoService.encrypt(password, this.machineKey);
     const config: Config = {
-      storagePath: path.resolve(this.configDir, 'env-store.store'),
+      storagePath: path.resolve(this.configDir, 'env-key-store.store'),
       encryptedPassword: encryptedPassword
     };
     await fs.writeFile(this.configPath, JSON.stringify(config, null, 2));

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Test script for env-store CLI
-echo "🧪 Testing env-store CLI..."
+# Test script for env-key-store CLI
+echo "🧪 Testing env-key-store CLI..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -10,7 +10,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Test directory
-TEST_DIR="./test-env-store"
+TEST_DIR="./test-env-key-store"
 TEST_STORE="$TEST_DIR/test.store"
 
 # Clean up previous test
@@ -150,4 +150,4 @@ rm -f .env.test .env.push .env.merged .env.replace .env.replaced
 rm -rf "$TEST_DIR"
 
 echo -e "\n${GREEN}🎉 All tests passed!${NC}"
-echo -e "${GREEN}The env-store CLI is working correctly.${NC}" 
+echo -e "${GREEN}The env-key-store CLI is working correctly.${NC}" 

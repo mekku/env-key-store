@@ -9,7 +9,7 @@ jest.mock('child_process', () => ({
 }));
 
 describe('CLI Integration Tests', () => {
-  const testConfigDir = path.join(homedir(), '.env-store-test');
+  const testConfigDir = path.join(homedir(), '.env-key-store-test');
   const testConfigPath = path.join(testConfigDir, 'config.json');
   const testStorePath = path.join(testConfigDir, 'test-store');
 
@@ -64,7 +64,7 @@ describe('CLI Integration Tests', () => {
 
       expect(() => {
         // This would actually call the mocked execSync
-        execSync('env-store set testProject INVALID_FORMAT');
+        execSync('env-key-store set testProject INVALID_FORMAT');
       }).toThrow('Invalid secret format: INVALID_FORMAT. Expected format: KEY=value');
     });
   });
@@ -187,12 +187,12 @@ describe('CLI Integration Tests', () => {
     it('should handle not initialized error', () => {
       // Mock error execution
       (execSync as jest.Mock).mockImplementation(() => {
-        throw new Error('Store is not initialized. Please run "env-store init" first.');
+        throw new Error('Store is not initialized. Please run "env-key-store init" first.');
       });
 
       expect(() => {
-        execSync('env-store set testProject API_KEY=value');
-      }).toThrow('Store is not initialized. Please run "env-store init" first.');
+        execSync('env-key-store set testProject API_KEY=value');
+      }).toThrow('Store is not initialized. Please run "env-key-store init" first.');
     });
 
     it('should handle invalid password error', () => {
@@ -202,7 +202,7 @@ describe('CLI Integration Tests', () => {
       });
 
       expect(() => {
-        execSync('env-store set testProject API_KEY=value');
+        execSync('env-key-store set testProject API_KEY=value');
       }).toThrow('Invalid password');
     });
 
@@ -213,7 +213,7 @@ describe('CLI Integration Tests', () => {
       });
 
       expect(() => {
-        execSync('env-store pull nonExistentProject');
+        execSync('env-key-store pull nonExistentProject');
       }).toThrow("Project 'nonExistentProject' not found");
     });
   });

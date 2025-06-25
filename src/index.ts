@@ -15,7 +15,7 @@ import { ChangePasswordCommand } from './application/commands/ChangePasswordComm
 const program = new Command();
 
 program
-  .name('env-store')
+  .name('env-key-store')
   .description('A CLI tool for managing encrypted project secrets')
   .version('1.0.0');
 

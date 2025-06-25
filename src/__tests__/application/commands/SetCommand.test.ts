@@ -86,7 +86,7 @@ describe('SetCommand', () => {
       mockConfigService.isInitialized.mockResolvedValue(false);
 
       await expect(setCommand.execute(projectName, secrets))
-        .rejects.toThrow('Store is not initialized. Please run "env-store init" first.');
+        .rejects.toThrow('Store is not initialized. Please run "env-key-store init" first.');
     });
 
     it('should throw error for invalid secret format', async () => {

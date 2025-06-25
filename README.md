@@ -35,82 +35,82 @@ yarn link
 
 1. Initialize with a master password:
 ```bash
-env-store init
+env-key-store init
 ```
 
 2. Configure storage location (optional):
 ```bash
-env-store use '/path/to/your/storage/file'
+env-key-store use '/path/to/your/storage/file'
 ```
 
 ### Managing Secrets
 
 #### Set secrets for a project:
 ```bash
-env-store set <project-name> KEY=value
-env-store set <project-name> KEY1=value1 KEY2=value2
+env-key-store set <project-name> KEY=value
+env-key-store set <project-name> KEY1=value1 KEY2=value2
 ```
 
 Examples:
 ```bash
-env-store set projecta API_KEY=abc123
-env-store set projecta ENDPOINT=https://api.example.com DATABASE_URL=postgres://...
+env-key-store set projecta API_KEY=abc123
+env-key-store set projecta ENDPOINT=https://api.example.com DATABASE_URL=postgres://...
 ```
 
 #### Pull secrets to .env file:
 ```bash
-env-store pull <project-name> [output-file]
+env-key-store pull <project-name> [output-file]
 ```
 
 Examples:
 ```bash
-env-store pull projecta .env
-env-store pull projecta .env.local
+env-key-store pull projecta .env
+env-key-store pull projecta .env.local
 ```
 
 #### Push secrets from a .env file:
 ```bash
-env-store push <project-name> <envfile>
+env-key-store push <project-name> <envfile>
 ```
 
 Examples:
 ```bash
-env-store push projecta .env
+env-key-store push projecta .env
 ```
 
 #### Replace all secrets in a project:
 ```bash
-env-store replace <project-name> <envfile>
+env-key-store replace <project-name> <envfile>
 ```
 
 Examples:
 ```bash
-env-store replace projecta .env
+env-key-store replace projecta .env
 ```
 
 #### Remove specific keys from a project:
 ```bash
-env-store unset <project-name> <keys...>
+env-key-store unset <project-name> <keys...>
 ```
 
 Examples:
 ```bash
-env-store unset projecta API_KEY DATABASE_URL
+env-key-store unset projecta API_KEY DATABASE_URL
 ```
 
 #### List projects:
 ```bash
-env-store list
+env-key-store list
 ```
 
 #### Remove a project:
 ```bash
-env-store remove <project-name>
+env-key-store remove <project-name>
 ```
 
 #### Change master password:
 ```bash
-env-store change-password
+env-key-store change-password
 ```
 
 ### Advanced Options
@@ -123,16 +123,16 @@ All commands support these optional flags:
 Examples:
 ```bash
 # Use different store file
-env-store set projecta API_KEY=abc123 -s /path/to/other/store
+env-key-store set projecta API_KEY=abc123 -s /path/to/other/store
 
 # Use different password
-env-store pull projecta .env -p mypassword
+env-key-store pull projecta .env -p mypassword
 
 # Use both custom store and password
-env-store list -s ./backup.store -p backup-password
+env-key-store list -s ./backup.store -p backup-password
 
 # Change password for specific store
-env-store change-password -s /path/to/store
+env-key-store change-password -s /path/to/store
 ```
 
 ## Security
@@ -147,8 +147,8 @@ env-store change-password -s /path/to/store
 ## Configuration
 
 The tool stores configuration in:
-- `~/.env-store/config.json` - Configuration and encrypted password
-- Custom storage file (configurable via `env-store use`)
+- `~/.env-key-store/config.json` - Configuration and encrypted password
+- Custom storage file (configurable via `env-key-store use`)
 
 ## Development
 

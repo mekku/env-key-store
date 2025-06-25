@@ -13,7 +13,7 @@ export class UseCommand {
     await this.configService.initialize();
     
     if (!(await this.configService.isInitialized())) {
-      throw new Error('Store is not initialized. Please run "env-store init" first.');
+      throw new Error('Store is not initialized. Please run "env-key-store init" first.');
     }
 
     await this.configService.setStoragePath(storagePath);

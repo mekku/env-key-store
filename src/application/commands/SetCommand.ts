@@ -16,7 +16,7 @@ export class SetCommand {
     await this.configService.initialize();
     
     if (!(await this.configService.isInitialized())) {
-      throw new Error('Store is not initialized. Please run "env-store init" first.');
+      throw new Error('Store is not initialized. Please run "env-key-store init" first.');
     }
 
     const password = customPassword || await this.configService.getPassword();

@@ -17,7 +17,7 @@ export class PullCommand {
     await this.configService.initialize();
     
     if (!(await this.configService.isInitialized())) {
-      throw new Error('Store is not initialized. Please run "env-store init" first.');
+      throw new Error('Store is not initialized. Please run "env-key-store init" first.');
     }
 
     const password = customPassword || await this.configService.getPassword();
@@ -29,7 +29,7 @@ export class PullCommand {
 
     const secrets = await this.projectService.getSecrets(projectName, password);
     
-    // Convert secrets to .env format with env-store markers
+    // Convert secrets to .env format with env-key-store markers
     const now = new Date().toISOString();
     const envContent = `# Store secrets for project: ${projectName}
 # Generated at: ${now}

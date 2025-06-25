@@ -31,7 +31,7 @@ export class ReplaceCommand {
   async execute(projectName: string, envFile: string, customStorePath?: string, customPassword?: string): Promise<void> {
     await this.configService.initialize();
     if (!(await this.configService.isInitialized())) {
-      throw new Error('Store is not initialized. Please run "env-store init" first.');
+      throw new Error('Store is not initialized. Please run "env-key-store init" first.');
     }
     const password = customPassword || await this.configService.getPassword();
     const storagePath = await this.configService.getStoragePathForFile(customStorePath);

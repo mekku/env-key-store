@@ -1,0 +1,84 @@
+name: Create Pull Request for Deployment
+on:
+  push:
+    branches:
+      - develop
+      - staging
+      - feature/*
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'README.md'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run validation
+        run: yarn validate
+          
+      - name: Build project
+        run: yarn build
+
+      - name: Fetch main and develop
+        run: |
+          git fetch origin main
+          git fetch origin develop
+
+      - name: Check diff
+        id: diff
+        run: |
+          COUNT=$(git rev-list --right-only --count origin/main...origin/develop)
+          echo "commits_ahead=$COUNT"
+          echo "commits_ahead=$COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Create deployment PR
+        if: steps.diff.outputs.commits_ahead != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          BRANCH="deploy/${{ github.ref_name }}-${{ github.sha }}"
+
+          git config --global user.name  "github-actions"
+          git config --global user.email "github-actions@github.com"
+
+          git checkout -b "$BRANCH" refs/remotes/origin/develop
+          git push -u origin "$BRANCH"
+
+          # Ensure labels exist
+          gh label create deployment --description "Deployment PR" --color "#1d76db" --force || true
+          gh label create auto-generated --description "Created by GitHub Action" --color "#ededed" --force || true
+
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "🚀 Deploy: ${BRANCH#deploy/} → main" \
+            --body "Auto-generated deployment PR for **${{ github.ref_name }}**" \
+            --label "deployment,auto-generated" \
+            --assignee "${{ github.actor }}"
+
+      - name: No diff – skip PR
+        if: steps.diff.outputs.commits_ahead == '0'
+        run: echo "develop is identical to main – no deployment PR needed."
